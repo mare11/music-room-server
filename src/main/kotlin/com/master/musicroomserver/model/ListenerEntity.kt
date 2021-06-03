@@ -4,8 +4,8 @@ import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
 import javax.persistence.*
 
-@Entity(name = "room_listener")
-class RoomListenerEntity(
+@Entity(name = "listener")
+class ListenerEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(nullable = false)

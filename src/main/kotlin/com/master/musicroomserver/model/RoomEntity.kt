@@ -12,8 +12,11 @@ class RoomEntity(
     @Column(nullable = false, unique = true)
     var code: String,
     @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var listeners: MutableList<RoomListenerEntity> = ArrayList()
+    var listeners: MutableList<ListenerEntity> = ArrayList(),
+    @OneToMany(mappedBy = "room", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("id")
+    var songs: MutableList<SongEntity> = ArrayList()
 ) {
     constructor(name: String, code: String) :
-            this(null, name, code, ArrayList())
+            this(null, name, code, ArrayList(), ArrayList())
 }

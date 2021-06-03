@@ -1,14 +1,20 @@
 package com.master.musicroomserver.util
 
+import com.master.musicroomserver.model.*
 import com.master.musicroomserver.model.Room
-import com.master.musicroomserver.model.RoomEntity
-import com.master.musicroomserver.model.RoomListener
-import com.master.musicroomserver.model.RoomListenerEntity
 
 fun mapRoomFromEntity(roomEntity: RoomEntity): Room {
-    return Room(roomEntity.name, roomEntity.code, roomEntity.listeners.map { mapRoomListenerFromEntity(it) })
+    return Room(
+        roomEntity.name,
+        roomEntity.code,
+        roomEntity.listeners.map { mapListenerFromEntity(it) },
+        roomEntity.songs.map { mapSongFromEntity(it) })
 }
 
-fun mapRoomListenerFromEntity(roomListenerEntity: RoomListenerEntity): RoomListener {
-    return RoomListener(roomListenerEntity.name, roomListenerEntity.connectedAt.toString())
+fun mapListenerFromEntity(listenerEntity: ListenerEntity): Listener {
+    return Listener(listenerEntity.name, listenerEntity.connectedAt.toString())
+}
+
+fun mapSongFromEntity(songEntity: SongEntity): Song {
+    return Song(songEntity.name, songEntity.duration)
 }
