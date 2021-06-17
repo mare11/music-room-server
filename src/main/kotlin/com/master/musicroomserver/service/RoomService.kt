@@ -14,5 +14,5 @@ interface RoomService {
 
     fun disconnectListener(roomCode: String, listener: Listener): Room
 
-    fun addSongToRoomPlaylist(roomCode: String, file: MultipartFile): Room
+    fun addSongToRoomPlaylist(roomCode: String, file: MultipartFile, name: String, duration: Long): Room
 }

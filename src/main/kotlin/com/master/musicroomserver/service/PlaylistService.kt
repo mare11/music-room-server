@@ -6,6 +6,7 @@ import uk.co.caprica.vlcj.binding.internal.libvlc_state_t.libvlc_Ended
 import uk.co.caprica.vlcj.player.MediaPlayerFactory
 import uk.co.caprica.vlcj.player.list.MediaListPlayer
 import uk.co.caprica.vlcj.player.list.MediaListPlayerEventAdapter
+import java.util.*
 
 class PlaylistService constructor(
     private val roomCode: String,
@@ -31,15 +32,17 @@ class PlaylistService constructor(
 
             override fun nextItem(mediaListPlayer: MediaListPlayer?, item: libvlc_media_t?, itemMrl: String?) {
                 finishedItems++
-                val currentItemIndex = mediaList.items().indexOfFirst { it.mrl().equals(itemMrl) }
-                if (currentItemIndex > 0) {
-                    val previousItem = mediaList.items()[currentItemIndex - 1]
-                    println("Found previous item, name:${previousItem.name()}, mrl:${previousItem.mrl()} on index:${currentItemIndex - 1}")
-                    // example: name=files/59ed9546-a527-432b-b91c-e16f86e510e5.mp3
-                    if (previousItem.name().contains("/")) {
-                        val previousItemFileName = previousItem.name().substring(previousItem.name().indexOf("/") + 1)
-                        listener.onSongFinished(previousItemFileName, roomCode)
-                    }
+                val nextItemIndex = mediaList.items().indexOfFirst { it.mrl().equals(itemMrl) }
+                val nextItem = mediaList.items()[nextItemIndex]
+                val nextItemFileName = extractSongFileName(nextItem.name())
+                println("Found next item: name:${nextItem.name()}, mrl:${nextItem.mrl()}")
+                if (nextItemIndex > 0) {
+                    val previousItem = mediaList.items()[nextItemIndex - 1]
+                    val previousItemFileName = extractSongFileName(previousItem.name())
+                    println("Found previous item, name:${previousItem.name()}, mrl:${previousItem.mrl()} on index:${nextItemIndex - 1}")
+                    listener.onNextSong(Optional.of(previousItemFileName), nextItemFileName, roomCode)
+                } else {
+                    listener.onNextSong(Optional.empty(), nextItemFileName, roomCode)
                 }
             }
 
@@ -47,7 +50,7 @@ class PlaylistService constructor(
                 if (libvlc_Ended == libvlc_state_t.state(p1) && finishedItems == mediaList.size()) {
                     println("Playlist finished, cleaning up...")
                     cleanUp()
-                    listener.onPlaylistFinished(roomCode)
+                    listener.onPlaylistEnded(roomCode)
                 }
             }
 
@@ -61,6 +64,14 @@ class PlaylistService constructor(
 
     private fun getStreamOptions(roomCode: String): String {
         return ":sout=#rtp{sdp=rtsp://$serverHost:$serverPort/$roomCode,mux=ts}"
+    }
+
+    private fun extractSongFileName(songFileName: String): String {
+        // example: name=files/59ed9546-a527-432b-b91c-e16f86e510e5
+        if (songFileName.contains("/")) {
+            return songFileName.substring(songFileName.indexOf("/") + 1)
+        }
+        return songFileName
     }
 
     private fun cleanUp() {

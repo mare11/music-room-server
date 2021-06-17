@@ -8,6 +8,7 @@ import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
 import com.master.musicroomserver.util.mapRoomFromEntity
+import com.master.musicroomserver.util.mapSongFromEntity
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -17,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import javax.annotation.PreDestroy
+import kotlin.concurrent.schedule
 
 @Service
 class RoomServiceImpl(
@@ -76,19 +78,14 @@ class RoomServiceImpl(
         }
     }
 
-    override fun addSongToRoomPlaylist(roomCode: String, file: MultipartFile): Room {
+    override fun addSongToRoomPlaylist(roomCode: String, file: MultipartFile, name: String, duration: Long): Room {
         if (file.isEmpty) {
             throw BadRequestException("Empty file uploaded")
         }
         val roomEntity = getRoomEntityByCode(roomCode)
-        // TODO: refactor
-        val originalFileName = file.originalFilename ?: ""
-        val indexOfFileExtension = originalFileName.lastIndexOf(".")
-        val songName = originalFileName.substring(0, indexOfFileExtension)
-        val fileExtension = originalFileName.substring(indexOfFileExtension)
-        val fileName = UUID.randomUUID().toString() + fileExtension
+        val fileName = UUID.randomUUID().toString()
         Files.write(Paths.get(getSongFilePath(fileName)), file.bytes)
-        val songEntity = SongEntity(songName, 0, fileName, roomEntity)
+        val songEntity = SongEntity(name, duration, fileName, roomEntity)
         songRepository.save(songEntity)
 
         if (roomPlaylistMap.containsKey(roomCode)) {
@@ -96,22 +93,37 @@ class RoomServiceImpl(
         } else {
             val playlistService = PlaylistService(roomCode, path, this, mediaPlayerFactory)
             roomPlaylistMap[roomCode] = playlistService
-            playlistService.play(fileName)
+            val timer = Timer()
+            println("Waiting 1 second to start streaming...")
+            timer.schedule(1000) {
+                playlistService.play(fileName)
+                timer.cancel()
+                println("Stream starting...")
+            }
         }
 
         return mapRoomFromEntity(roomEntity)
     }
 
-    override fun onSongFinished(songFileName: String, roomCode: String) {
-        println("Song $songFileName finished!")
-        val songEntityOptional = songRepository.findByFileName(songFileName)
+    override fun onNextSong(previousSongFileName: Optional<String>, nextSongFileName: String, roomCode: String) {
+        if (previousSongFileName.isPresent) {
+            println("Song ${previousSongFileName.get()} finished!")
+            val songEntityOptional = songRepository.findByFileName(previousSongFileName.get())
+            if (songEntityOptional.isPresent) {
+                songRepository.delete(songEntityOptional.get())
+                Files.delete(Paths.get(getSongFilePath(previousSongFileName.get())))
+            }
+        }
+
+        val songEntityOptional = songRepository.findByFileName(nextSongFileName)
         if (songEntityOptional.isPresent) {
-            songRepository.delete(songEntityOptional.get())
-            Files.delete(Paths.get(getSongFilePath(songFileName)))
+            val song = mapSongFromEntity(songEntityOptional.get())
+            println("Next song: ${song.name}")
+            webSocketTemplate.convertAndSend("/topic/room/$roomCode/stream", song)
         }
     }
 
-    override fun onPlaylistFinished(roomCode: String) {
+    override fun onPlaylistEnded(roomCode: String) {
         // there should be only 1 song left to be removed in the end
         songRepository.findByRoomCode(roomCode).forEach {
             songRepository.delete(it)

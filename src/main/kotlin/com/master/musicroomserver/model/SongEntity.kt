@@ -9,14 +9,14 @@ class SongEntity(
     @Column(nullable = false)
     var name: String,
     @Column(nullable = false)
-    var duration: Int,
+    var duration: Long,
     @Column(nullable = false)
     var fileName: String,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     var room: RoomEntity
 ) {
-    constructor(name: String, duration: Int, fileName: String, room: RoomEntity) :
+    constructor(name: String, duration: Long, fileName: String, room: RoomEntity) :
             this(null, name, duration, fileName, room)
 
 }

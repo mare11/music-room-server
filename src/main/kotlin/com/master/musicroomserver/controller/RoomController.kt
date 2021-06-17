@@ -39,8 +39,11 @@ class RoomController(val roomService: RoomService) {
     }
 
     @PostMapping("/{code}/upload", consumes = [MULTIPART_FORM_DATA_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun addSongToRoomPlaylist(@PathVariable code: String, @RequestParam file: MultipartFile): ResponseEntity<Room> {
-        val room = roomService.addSongToRoomPlaylist(code, file)
+    fun addSongToRoomPlaylist(
+        @PathVariable code: String, @RequestParam file: MultipartFile,
+        @RequestParam name: String, @RequestParam duration: Long
+    ): ResponseEntity<Room> {
+        val room = roomService.addSongToRoomPlaylist(code, file, name, duration)
         return ok().body(room)
     }
 }
