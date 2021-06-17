@@ -7,6 +7,7 @@ import com.master.musicroomserver.model.*
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
+import com.master.musicroomserver.util.mapRoomDetailsFromEntity
 import com.master.musicroomserver.util.mapRoomFromEntity
 import com.master.musicroomserver.util.mapSongFromEntity
 import org.springframework.messaging.simp.SimpMessagingTemplate
@@ -52,33 +53,36 @@ class RoomServiceImpl(
         return mapRoomFromEntity(roomEntity)
     }
 
-    override fun connectListener(roomCode: String, listener: Listener): Room {
+    override fun connectListener(roomCode: String, listener: Listener): RoomDetails {
         val roomListenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listener.name)
         if (!roomListenerEntityOptional.isPresent) {
             val roomEntity = getRoomEntityByCode(roomCode)
             val listenerEntity = ListenerEntity(listener.name, roomEntity)
             listenerRepository.save(listenerEntity)
 //            webSocketTemplate.convertAndSend("/topic/room/{roomCode}/listeners", roomEntity.listeners)
-            return mapRoomFromEntity(roomEntity)
+            return mapRoomDetailsFromEntity(roomEntity)
         } else {
             throw AlreadyExistsException("Listener name '${listener.name}' already taken in room with code '$roomCode'")
         }
     }
 
-    override fun disconnectListener(roomCode: String, listener: Listener): Room {
+    override fun disconnectListener(roomCode: String, listener: Listener) {
         val listenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listener.name)
         if (listenerEntityOptional.isPresent) {
-            val roomEntity = getRoomEntityByCode(roomCode)
             val listenerEntity = listenerEntityOptional.get()
             listenerRepository.delete(listenerEntity)
 //            webSocketTemplate.convertAndSend("/topic/room/{roomCode}/listeners", roomEntity.listeners)
-            return mapRoomFromEntity(roomEntity)
         } else {
             throw NotFoundException("Listener '${listener.name}' not found in room with code '$roomCode'")
         }
     }
 
-    override fun addSongToRoomPlaylist(roomCode: String, file: MultipartFile, name: String, duration: Long): Room {
+    override fun addSongToRoomPlaylist(
+        roomCode: String,
+        file: MultipartFile,
+        name: String,
+        duration: Long
+    ): RoomDetails {
         if (file.isEmpty) {
             throw BadRequestException("Empty file uploaded")
         }
@@ -102,7 +106,7 @@ class RoomServiceImpl(
             }
         }
 
-        return mapRoomFromEntity(roomEntity)
+        return mapRoomDetailsFromEntity(roomEntity)
     }
 
     override fun onNextSong(previousSongFileName: Optional<String>, nextSongFileName: String, roomCode: String) {

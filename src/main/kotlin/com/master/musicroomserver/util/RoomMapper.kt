@@ -1,10 +1,13 @@
 package com.master.musicroomserver.util
 
 import com.master.musicroomserver.model.*
-import com.master.musicroomserver.model.Room
 
 fun mapRoomFromEntity(roomEntity: RoomEntity): Room {
-    return Room(
+    return Room(roomEntity.name, roomEntity.code)
+}
+
+fun mapRoomDetailsFromEntity(roomEntity: RoomEntity): RoomDetails {
+    return RoomDetails(
         roomEntity.name,
         roomEntity.code,
         roomEntity.listeners.map { mapListenerFromEntity(it) },

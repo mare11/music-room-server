@@ -2,6 +2,7 @@ package com.master.musicroomserver.controller
 
 import com.master.musicroomserver.model.Listener
 import com.master.musicroomserver.model.Room
+import com.master.musicroomserver.model.RoomDetails
 import com.master.musicroomserver.service.RoomService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE
@@ -27,22 +28,22 @@ class RoomController(val roomService: RoomService) {
     }
 
     @PutMapping("/{code}/connect", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun connectToRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<Room> {
+    fun connectToRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<RoomDetails> {
         val room = roomService.connectListener(code, listener)
         return ok().body(room)
     }
 
     @PutMapping("/{code}/disconnect", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun disconnectFromRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<Room> {
-        val room = roomService.disconnectListener(code, listener)
-        return ok().body(room)
+    fun disconnectFromRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<Unit> {
+        roomService.disconnectListener(code, listener)
+        return ok().build()
     }
 
     @PostMapping("/{code}/upload", consumes = [MULTIPART_FORM_DATA_VALUE], produces = [APPLICATION_JSON_VALUE])
     fun addSongToRoomPlaylist(
         @PathVariable code: String, @RequestParam file: MultipartFile,
         @RequestParam name: String, @RequestParam duration: Long
-    ): ResponseEntity<Room> {
+    ): ResponseEntity<RoomDetails> {
         val room = roomService.addSongToRoomPlaylist(code, file, name, duration)
         return ok().body(room)
     }
