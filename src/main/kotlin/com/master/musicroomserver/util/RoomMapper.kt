@@ -3,7 +3,7 @@ package com.master.musicroomserver.util
 import com.master.musicroomserver.model.*
 
 fun mapRoomFromEntity(roomEntity: RoomEntity): Room {
-    return Room(roomEntity.name, roomEntity.code)
+    return Room(roomEntity.name, roomEntity.code, roomEntity.listeners.size)
 }
 
 fun mapRoomDetailsFromEntity(roomEntity: RoomEntity): RoomDetails {

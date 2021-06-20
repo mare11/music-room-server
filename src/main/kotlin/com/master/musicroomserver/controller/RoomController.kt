@@ -21,6 +21,12 @@ class RoomController(val roomService: RoomService) {
         return ok().body(room)
     }
 
+    @GetMapping("/", produces = [APPLICATION_JSON_VALUE])
+    fun getRoomsByCodes(@RequestParam codes: List<String>): ResponseEntity<List<Room>> {
+        val rooms = roomService.getRoomsByCodes(codes)
+        return ok().body(rooms)
+    }
+
     @PostMapping("/", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
     fun createRoom(@RequestBody room: Room): ResponseEntity<Room> {
         val newRoom = roomService.createRoom(room)

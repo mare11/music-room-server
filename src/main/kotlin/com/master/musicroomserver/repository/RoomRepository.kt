@@ -10,4 +10,5 @@ interface RoomRepository : JpaRepository<RoomEntity, Long> {
 
     fun findByCode(code: String): Optional<RoomEntity>
     
+    fun findByCodeIn(codes: List<String>): List<RoomEntity>
 }
