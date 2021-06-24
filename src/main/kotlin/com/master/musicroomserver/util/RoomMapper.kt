@@ -21,5 +21,5 @@ fun mapListenerFromEntity(listenerEntity: ListenerEntity): Listener {
 }
 
 fun mapSongFromEntity(songEntity: SongEntity): Song {
-    return Song(songEntity.name, songEntity.duration)
+    return Song(songEntity.name, songEntity.duration, songEntity.uploader)
 }

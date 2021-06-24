@@ -86,7 +86,8 @@ class RoomServiceImpl(
         roomCode: String,
         file: MultipartFile,
         name: String,
-        duration: Long
+        duration: Long,
+        uploader: String
     ): RoomDetails {
         if (file.isEmpty) {
             throw BadRequestException("Empty file uploaded")
@@ -94,7 +95,7 @@ class RoomServiceImpl(
         val roomEntity = getRoomEntityByCode(roomCode)
         val fileName = UUID.randomUUID().toString()
         Files.write(Paths.get(getSongFilePath(fileName)), file.bytes)
-        val songEntity = SongEntity(name, duration, fileName, roomEntity)
+        val songEntity = SongEntity(name, duration, fileName, uploader, roomEntity)
         songRepository.save(songEntity)
 
         if (roomPlaylistMap.containsKey(roomCode)) {
