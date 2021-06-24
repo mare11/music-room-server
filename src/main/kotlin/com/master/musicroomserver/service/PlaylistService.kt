@@ -17,6 +17,7 @@ class PlaylistService constructor(
 
     private val serverHost = "192.168.1.8"
     private var serverPort = 5555
+    private val mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer()
     private val mediaListPlayer = mediaPlayerFactory.newMediaListPlayer()
     private val mediaList = mediaPlayerFactory.newMediaList()
     private var finishedItems = 0
@@ -27,6 +28,7 @@ class PlaylistService constructor(
         println("Streaming files from path:$path")
 
         mediaListPlayer.mediaList = mediaList
+        mediaListPlayer.setMediaPlayer(mediaPlayer)
 
         mediaListPlayer.addMediaListPlayerEventListener(object : MediaListPlayerEventAdapter() {
 
@@ -62,6 +64,18 @@ class PlaylistService constructor(
         mediaList.addMedia("$path/$songFileName")
     }
 
+    fun getCurrentPlayerTime(): Long {
+        return if (mediaPlayer.isPlaying) {
+            println("*** current player time: ${mediaPlayer.time} ***")
+            println("*** current player length: ${mediaPlayer.length} ***")
+            println("*** current player position: ${mediaPlayer.position} ***")
+            mediaPlayer.time
+        } else {
+            println("*** current player time is 0 since player is not playing ***")
+            0L
+        }
+    }
+
     private fun getStreamOptions(roomCode: String): String {
         return ":sout=#rtp{sdp=rtsp://$serverHost:$serverPort/$roomCode,mux=ts}"
     }
@@ -76,6 +90,7 @@ class PlaylistService constructor(
 
     private fun cleanUp() {
         mediaList.release()
+        mediaPlayer.release()
         mediaListPlayer.release()
     }
 }

@@ -4,6 +4,7 @@ import com.master.musicroomserver.exception.AlreadyExistsException
 import com.master.musicroomserver.exception.BadRequestException
 import com.master.musicroomserver.exception.NotFoundException
 import com.master.musicroomserver.model.*
+import com.master.musicroomserver.model.RoomEntity
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
@@ -64,7 +65,7 @@ class RoomServiceImpl(
             val listenerEntity = ListenerEntity(listener.name, roomEntity)
             listenerRepository.save(listenerEntity)
 //            webSocketTemplate.convertAndSend("/topic/room/{roomCode}/listeners", roomEntity.listeners)
-            return mapRoomDetailsFromEntity(roomEntity)
+            return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
         } else {
             throw AlreadyExistsException("Listener name '${listener.name}' already taken in room with code '$roomCode'")
         }
@@ -110,7 +111,7 @@ class RoomServiceImpl(
             }
         }
 
-        return mapRoomDetailsFromEntity(roomEntity)
+        return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
     }
 
     override fun onNextSong(previousSongFileName: Optional<String>, nextSongFileName: String, roomCode: String) {
@@ -147,6 +148,10 @@ class RoomServiceImpl(
     private fun getRoomEntityByCode(roomCode: String): RoomEntity {
         return roomRepository.findByCode(roomCode)
             .orElseThrow { NotFoundException("Room with code '$roomCode' not found!") }
+    }
+
+    private fun getElapsedSongDuration(roomCode: String): Long {
+        return roomPlaylistMap[roomCode]?.getCurrentPlayerTime() ?: 0L
     }
 
     @PreDestroy
