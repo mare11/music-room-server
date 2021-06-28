@@ -4,10 +4,10 @@ import com.master.musicroomserver.exception.AlreadyExistsException
 import com.master.musicroomserver.exception.BadRequestException
 import com.master.musicroomserver.exception.NotFoundException
 import com.master.musicroomserver.model.*
-import com.master.musicroomserver.model.RoomEntity
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
+import com.master.musicroomserver.util.mapListenerFromEntity
 import com.master.musicroomserver.util.mapRoomDetailsFromEntity
 import com.master.musicroomserver.util.mapRoomFromEntity
 import com.master.musicroomserver.util.mapSongFromEntity
@@ -58,27 +58,30 @@ class RoomServiceImpl(
         return mapRoomFromEntity(roomEntity)
     }
 
-    override fun connectListener(roomCode: String, listener: Listener): RoomDetails {
-        val roomListenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listener.name)
+    override fun connectListener(roomCode: String, listenerName: String): RoomDetails {
+        val roomListenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
         if (!roomListenerEntityOptional.isPresent) {
             val roomEntity = getRoomEntityByCode(roomCode)
-            val listenerEntity = ListenerEntity(listener.name, roomEntity)
+            val listenerEntity = ListenerEntity(listenerName, roomEntity)
             listenerRepository.save(listenerEntity)
-//            webSocketTemplate.convertAndSend("/topic/room/{roomCode}/listeners", roomEntity.listeners)
+            webSocketTemplate.convertAndSend(
+                "/topic/room/$roomCode/listener/connect",
+                mapListenerFromEntity(listenerEntity)
+            )
             return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
         } else {
-            throw AlreadyExistsException("Listener name '${listener.name}' already taken in room with code '$roomCode'")
+            throw AlreadyExistsException("Listener name '$listenerName' already taken in room with code '$roomCode'")
         }
     }
 
-    override fun disconnectListener(roomCode: String, listener: Listener) {
-        val listenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listener.name)
+    override fun disconnectListener(roomCode: String, listenerName: String) {
+        val listenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
         if (listenerEntityOptional.isPresent) {
             val listenerEntity = listenerEntityOptional.get()
             listenerRepository.delete(listenerEntity)
-//            webSocketTemplate.convertAndSend("/topic/room/{roomCode}/listeners", roomEntity.listeners)
+            webSocketTemplate.convertAndSend("/topic/room/$roomCode/listener/disconnect", listenerName)
         } else {
-            throw NotFoundException("Listener '${listener.name}' not found in room with code '$roomCode'")
+            throw NotFoundException("Listener '$listenerName' not found in room with code '$roomCode'")
         }
     }
 
@@ -100,6 +103,7 @@ class RoomServiceImpl(
 
         if (roomPlaylistMap.containsKey(roomCode)) {
             roomPlaylistMap[roomCode]?.addSongToPlaylist(fileName)
+            webSocketTemplate.convertAndSend("/topic/room/$roomCode/song/add", mapSongFromEntity(songEntity))
         } else {
             val playlistService = PlaylistService(roomCode, path, this, mediaPlayerFactory)
             roomPlaylistMap[roomCode] = playlistService
@@ -122,6 +126,10 @@ class RoomServiceImpl(
             if (songEntityOptional.isPresent) {
                 songRepository.delete(songEntityOptional.get())
                 Files.delete(Paths.get(getSongFilePath(previousSongFileName.get())))
+                webSocketTemplate.convertAndSend(
+                    "/topic/room/$roomCode/song/end",
+                    mapSongFromEntity(songEntityOptional.get())
+                )
             }
         }
 
@@ -129,7 +137,7 @@ class RoomServiceImpl(
         if (songEntityOptional.isPresent) {
             val song = mapSongFromEntity(songEntityOptional.get())
             println("Next song: ${song.name}")
-            webSocketTemplate.convertAndSend("/topic/room/$roomCode/stream", song)
+            webSocketTemplate.convertAndSend("/topic/room/$roomCode/song/next", song)
         }
     }
 

@@ -1,6 +1,5 @@
 package com.master.musicroomserver.controller
 
-import com.master.musicroomserver.model.Listener
 import com.master.musicroomserver.model.Room
 import com.master.musicroomserver.model.RoomDetails
 import com.master.musicroomserver.service.RoomService
@@ -33,14 +32,14 @@ class RoomController(val roomService: RoomService) {
         return ok().body(newRoom)
     }
 
-    @PutMapping("/{code}/connect", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun connectToRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<RoomDetails> {
+    @PutMapping("/{code}/connect", produces = [APPLICATION_JSON_VALUE])
+    fun connectToRoom(@PathVariable code: String, @RequestParam listener: String): ResponseEntity<RoomDetails> {
         val room = roomService.connectListener(code, listener)
         return ok().body(room)
     }
 
-    @PutMapping("/{code}/disconnect", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun disconnectFromRoom(@PathVariable code: String, @RequestBody listener: Listener): ResponseEntity<Unit> {
+    @PutMapping("/{code}/disconnect")
+    fun disconnectFromRoom(@PathVariable code: String, @RequestParam listener: String): ResponseEntity<Unit> {
         roomService.disconnectListener(code, listener)
         return ok().build()
     }
