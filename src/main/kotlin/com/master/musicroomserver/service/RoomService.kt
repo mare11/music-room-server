@@ -10,7 +10,7 @@ interface RoomService {
 
     fun getRoomsByCodes(roomCodes: List<String>): List<Room>
 
-    fun createRoom(room: Room): Room
+    fun createRoom(name: String): Room
 
     fun connectListener(roomCode: String, listenerName: String): RoomDetails
 

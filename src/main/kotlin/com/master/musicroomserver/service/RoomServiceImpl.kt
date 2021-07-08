@@ -7,10 +7,8 @@ import com.master.musicroomserver.model.*
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
-import com.master.musicroomserver.util.mapListenerFromEntity
-import com.master.musicroomserver.util.mapRoomDetailsFromEntity
-import com.master.musicroomserver.util.mapRoomFromEntity
-import com.master.musicroomserver.util.mapSongFromEntity
+import com.master.musicroomserver.util.*
+import com.master.musicroomserver.util.GeneratorUtil.generateRoomCode
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -52,8 +50,8 @@ class RoomServiceImpl(
         return roomRepository.findByCodeIn(roomCodes).map { mapRoomFromEntity(it) }
     }
 
-    override fun createRoom(room: Room): Room {
-        val roomEntity = RoomEntity(room.name, room.code)
+    override fun createRoom(name: String): Room {
+        val roomEntity = RoomEntity(name, generateRoomCode())
         roomRepository.save(roomEntity)
         return mapRoomFromEntity(roomEntity)
     }

@@ -26,9 +26,9 @@ class RoomController(val roomService: RoomService) {
         return ok().body(rooms)
     }
 
-    @PostMapping("/", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
-    fun createRoom(@RequestBody room: Room): ResponseEntity<Room> {
-        val newRoom = roomService.createRoom(room)
+    @PostMapping("/", produces = [APPLICATION_JSON_VALUE])
+    fun createRoom(@RequestParam name: String): ResponseEntity<Room> {
+        val newRoom = roomService.createRoom(name)
         return ok().body(newRoom)
     }
 
