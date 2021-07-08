@@ -52,4 +52,10 @@ class RoomController(val roomService: RoomService) {
         val room = roomService.addSongToRoomPlaylist(code, file, name, duration, uploader)
         return ok().body(room)
     }
+
+    @PutMapping("/{code}/skip")
+    fun skipSongForRoom(@PathVariable code: String): ResponseEntity<Unit> {
+        roomService.skipSongForRoom(code)
+        return ok().build()
+    }
 }

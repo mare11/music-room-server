@@ -14,7 +14,7 @@ interface RoomService {
 
     fun connectListener(roomCode: String, listenerName: String): RoomDetails
 
-    fun disconnectListener(roomCode: String, listenerName: String): Unit
+    fun disconnectListener(roomCode: String, listenerName: String)
 
     fun addSongToRoomPlaylist(
         roomCode: String,
@@ -23,4 +23,6 @@ interface RoomService {
         duration: Long,
         uploader: String
     ): RoomDetails
+
+    fun skipSongForRoom(roomCode: String)
 }

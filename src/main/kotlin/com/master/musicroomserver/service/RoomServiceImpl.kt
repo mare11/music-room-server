@@ -119,6 +119,10 @@ class RoomServiceImpl(
         return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
     }
 
+    override fun skipSongForRoom(roomCode: String) {
+        roomPlaylistMap[roomCode]?.skipSong()
+    }
+
     override fun onNextSong(previousSongFileName: Optional<String>, nextSongFileName: String, roomCode: String) {
         if (previousSongFileName.isPresent) {
             println("Song ${previousSongFileName.get()} finished!")

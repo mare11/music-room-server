@@ -64,6 +64,13 @@ class PlaylistService constructor(
         mediaList.addMedia("$path/$songFileName")
     }
 
+    fun skipSong() {
+        if (mediaPlayer.isPlaying) {
+            println("Skipping song for room code: $roomCode")
+            mediaListPlayer.playNext()
+        }
+    }
+
     fun getCurrentPlayerTime(): Long {
         return if (mediaPlayer.isPlaying) {
             println("*** current player time: ${mediaPlayer.time} ***")
