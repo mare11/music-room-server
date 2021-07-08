@@ -6,7 +6,6 @@ import uk.co.caprica.vlcj.binding.internal.libvlc_state_t.libvlc_Ended
 import uk.co.caprica.vlcj.player.MediaPlayerFactory
 import uk.co.caprica.vlcj.player.list.MediaListPlayer
 import uk.co.caprica.vlcj.player.list.MediaListPlayerEventAdapter
-import java.util.*
 
 class PlaylistService constructor(
     private val roomCode: String,
@@ -42,9 +41,9 @@ class PlaylistService constructor(
                     val previousItem = mediaList.items()[nextItemIndex - 1]
                     val previousItemFileName = extractSongFileName(previousItem.name())
                     println("Found previous item, name:${previousItem.name()}, mrl:${previousItem.mrl()} on index:${nextItemIndex - 1}")
-                    listener.onNextSong(Optional.of(previousItemFileName), nextItemFileName, roomCode)
+                    listener.onNextSong(previousItemFileName, nextItemFileName, roomCode)
                 } else {
-                    listener.onNextSong(Optional.empty(), nextItemFileName, roomCode)
+                    listener.onNextSong(null, nextItemFileName, roomCode)
                 }
             }
 

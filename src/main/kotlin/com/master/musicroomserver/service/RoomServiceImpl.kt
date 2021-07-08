@@ -59,8 +59,8 @@ class RoomServiceImpl(
     }
 
     override fun connectListener(roomCode: String, listenerName: String): RoomDetails {
-        val roomListenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
-        if (!roomListenerEntityOptional.isPresent) {
+        val roomListenerEntity = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
+        if (roomListenerEntity == null) {
             val roomEntity = getRoomEntityByCode(roomCode)
             val listenerEntity = ListenerEntity(listenerName, roomEntity)
             listenerRepository.save(listenerEntity)
@@ -75,9 +75,8 @@ class RoomServiceImpl(
     }
 
     override fun disconnectListener(roomCode: String, listenerName: String) {
-        val listenerEntityOptional = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
-        if (listenerEntityOptional.isPresent) {
-            val listenerEntity = listenerEntityOptional.get()
+        val listenerEntity = listenerRepository.findByRoomCodeAndName(roomCode, listenerName)
+        if (listenerEntity != null) {
             listenerRepository.delete(listenerEntity)
             webSocketTemplate.convertAndSend("/topic/room/$roomCode/listener/disconnect", listenerName)
         } else {
@@ -123,23 +122,21 @@ class RoomServiceImpl(
         roomPlaylistMap[roomCode]?.skipSong()
     }
 
-    override fun onNextSong(previousSongFileName: Optional<String>, nextSongFileName: String, roomCode: String) {
-        if (previousSongFileName.isPresent) {
-            println("Song ${previousSongFileName.get()} finished!")
-            val songEntityOptional = songRepository.findByFileName(previousSongFileName.get())
-            if (songEntityOptional.isPresent) {
-                songRepository.delete(songEntityOptional.get())
-                Files.delete(Paths.get(getSongFilePath(previousSongFileName.get())))
+    override fun onNextSong(previousSongFileName: String?, nextSongFileName: String, roomCode: String) {
+        if (previousSongFileName != null) {
+            println("Song $previousSongFileName finished!")
+            songRepository.findByFileName(previousSongFileName)?.let {
+                songRepository.delete(it)
+                Files.delete(Paths.get(getSongFilePath(previousSongFileName)))
                 webSocketTemplate.convertAndSend(
                     "/topic/room/$roomCode/song/end",
-                    mapSongFromEntity(songEntityOptional.get())
+                    mapSongFromEntity(it)
                 )
             }
         }
 
-        val songEntityOptional = songRepository.findByFileName(nextSongFileName)
-        if (songEntityOptional.isPresent) {
-            val song = mapSongFromEntity(songEntityOptional.get())
+        songRepository.findByFileName(nextSongFileName)?.let {
+            val song = mapSongFromEntity(it)
             println("Next song: ${song.name}")
             webSocketTemplate.convertAndSend("/topic/room/$roomCode/song/next", song)
         }
@@ -159,8 +156,7 @@ class RoomServiceImpl(
     }
 
     private fun getRoomEntityByCode(roomCode: String): RoomEntity {
-        return roomRepository.findByCode(roomCode)
-            .orElseThrow { NotFoundException("Room with code '$roomCode' not found!") }
+        return roomRepository.findByCode(roomCode) ?: throw NotFoundException("Room with code '$roomCode' not found!")
     }
 
     private fun getElapsedSongDuration(roomCode: String): Long {
