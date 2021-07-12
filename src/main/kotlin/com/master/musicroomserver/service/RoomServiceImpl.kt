@@ -50,8 +50,8 @@ class RoomServiceImpl(
         return roomRepository.findByCodeIn(roomCodes).map { mapRoomFromEntity(it) }
     }
 
-    override fun createRoom(name: String): Room {
-        val roomEntity = RoomEntity(name, generateRoomCode())
+    override fun createRoom(newRoom: NewRoom): Room {
+        val roomEntity = RoomEntity(newRoom.name, generateRoomCode())
         roomRepository.save(roomEntity)
         return mapRoomFromEntity(roomEntity)
     }

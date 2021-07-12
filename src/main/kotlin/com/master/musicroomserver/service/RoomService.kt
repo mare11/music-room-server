@@ -1,5 +1,6 @@
 package com.master.musicroomserver.service
 
+import com.master.musicroomserver.model.NewRoom
 import com.master.musicroomserver.model.Room
 import com.master.musicroomserver.model.RoomDetails
 import org.springframework.web.multipart.MultipartFile
@@ -10,7 +11,7 @@ interface RoomService {
 
     fun getRoomsByCodes(roomCodes: List<String>): List<Room>
 
-    fun createRoom(name: String): Room
+    fun createRoom(newRoom: NewRoom): Room
 
     fun connectListener(roomCode: String, listenerName: String): RoomDetails
 

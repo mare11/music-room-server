@@ -1,5 +1,6 @@
 package com.master.musicroomserver.controller
 
+import com.master.musicroomserver.model.NewRoom
 import com.master.musicroomserver.model.Room
 import com.master.musicroomserver.model.RoomDetails
 import com.master.musicroomserver.service.RoomService
@@ -26,10 +27,10 @@ class RoomController(val roomService: RoomService) {
         return ok().body(rooms)
     }
 
-    @PostMapping("/", produces = [APPLICATION_JSON_VALUE])
-    fun createRoom(@RequestParam name: String): ResponseEntity<Room> {
-        val newRoom = roomService.createRoom(name)
-        return ok().body(newRoom)
+    @PostMapping("/", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
+    fun createRoom(@RequestBody newRoom: NewRoom): ResponseEntity<Room> {
+        val room = roomService.createRoom(newRoom)
+        return ok().body(room)
     }
 
     @PutMapping("/{code}/connect", produces = [APPLICATION_JSON_VALUE])
