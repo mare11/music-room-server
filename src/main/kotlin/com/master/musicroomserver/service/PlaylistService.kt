@@ -14,7 +14,6 @@ class PlaylistService constructor(
     mediaPlayerFactory: MediaPlayerFactory
 ) {
 
-    private val serverHost = "192.168.1.8"
     private var serverPort = 5555
     private val mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer()
     private val mediaListPlayer = mediaPlayerFactory.newMediaListPlayer()
@@ -64,7 +63,7 @@ class PlaylistService constructor(
     }
 
     fun skipSong() {
-        if (mediaPlayer.isPlaying) {
+        if (mediaPlayer.isPlaying && finishedItems < mediaList.size()) {
             println("Skipping song for room code: $roomCode")
             mediaListPlayer.playNext()
         }
@@ -83,7 +82,7 @@ class PlaylistService constructor(
     }
 
     private fun getStreamOptions(roomCode: String): String {
-        return ":sout=#rtp{sdp=rtsp://$serverHost:$serverPort/$roomCode,mux=ts}"
+        return ":sout=#rtp{sdp=rtsp://:$serverPort/$roomCode,mux=ts}"
     }
 
     private fun extractSongFileName(songFileName: String): String {
