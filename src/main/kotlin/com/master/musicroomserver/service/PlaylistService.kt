@@ -18,7 +18,7 @@ class PlaylistService constructor(
     private val mediaPlayer = mediaPlayerFactory.newHeadlessMediaPlayer()
     private val mediaListPlayer = mediaPlayerFactory.newMediaListPlayer()
     private val mediaList = mediaPlayerFactory.newMediaList()
-    private var finishedItems = 0
+    private var itemsPlayed = 0
 
     fun play(songFileName: String) {
         mediaList.setStandardMediaOptions(getStreamOptions(roomCode))
@@ -31,7 +31,7 @@ class PlaylistService constructor(
         mediaListPlayer.addMediaListPlayerEventListener(object : MediaListPlayerEventAdapter() {
 
             override fun nextItem(mediaListPlayer: MediaListPlayer?, item: libvlc_media_t?, itemMrl: String?) {
-                finishedItems++
+                itemsPlayed++
                 val nextItemIndex = mediaList.items().indexOfFirst { it.mrl().equals(itemMrl) }
                 val nextItem = mediaList.items()[nextItemIndex]
                 val nextItemFileName = extractSongFileName(nextItem.name())
@@ -47,7 +47,7 @@ class PlaylistService constructor(
             }
 
             override fun mediaStateChanged(p0: MediaListPlayer?, p1: Int) {
-                if (libvlc_Ended == libvlc_state_t.state(p1) && finishedItems == mediaList.size()) {
+                if (libvlc_Ended == libvlc_state_t.state(p1) && itemsPlayed == mediaList.size()) {
                     println("Playlist finished, cleaning up...")
                     cleanUp()
                     listener.onPlaylistEnded(roomCode)
@@ -62,9 +62,9 @@ class PlaylistService constructor(
         mediaList.addMedia("$path/$songFileName")
     }
 
-    fun skipSong() {
-        if (mediaPlayer.isPlaying && finishedItems < mediaList.size()) {
-            println("Skipping song for room code: $roomCode")
+    fun playNextSong() {
+        if (mediaPlayer.isPlaying && itemsPlayed < mediaList.size()) {
+            println("Playing next song for room code: $roomCode")
             mediaListPlayer.playNext()
         }
     }

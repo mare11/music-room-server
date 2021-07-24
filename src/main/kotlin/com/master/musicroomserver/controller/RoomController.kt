@@ -54,9 +54,9 @@ class RoomController(val roomService: RoomService) {
         return ok().body(room)
     }
 
-    @PutMapping("/{code}/skip")
-    fun skipSongForRoom(@PathVariable code: String): ResponseEntity<Unit> {
-        roomService.skipSongForRoom(code)
+    @PutMapping("/{code}/next")
+    fun playNextSongForRoom(@PathVariable code: String): ResponseEntity<Unit> {
+        roomService.playNextSongForRoom(code)
         return ok().build()
     }
 }

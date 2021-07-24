@@ -7,8 +7,11 @@ import com.master.musicroomserver.model.*
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
-import com.master.musicroomserver.util.*
 import com.master.musicroomserver.util.GeneratorUtil.generateRoomCode
+import com.master.musicroomserver.util.mapListenerFromEntity
+import com.master.musicroomserver.util.mapRoomDetailsFromEntity
+import com.master.musicroomserver.util.mapRoomFromEntity
+import com.master.musicroomserver.util.mapSongFromEntity
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -116,8 +119,8 @@ class RoomServiceImpl(
         return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
     }
 
-    override fun skipSongForRoom(roomCode: String) {
-        roomPlaylistMap[roomCode]?.skipSong()
+    override fun playNextSongForRoom(roomCode: String) {
+        roomPlaylistMap[roomCode]?.playNextSong()
     }
 
     override fun onNextSong(previousSongFileName: String?, nextSongFileName: String, roomCode: String) {

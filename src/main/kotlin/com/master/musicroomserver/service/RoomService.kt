@@ -25,5 +25,5 @@ interface RoomService {
         uploader: String
     ): RoomDetails
 
-    fun skipSongForRoom(roomCode: String)
+    fun playNextSongForRoom(roomCode: String)
 }
