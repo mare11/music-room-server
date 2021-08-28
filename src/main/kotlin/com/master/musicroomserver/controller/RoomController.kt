@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity.ok
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
-@RestController()
+@RestController
 @RequestMapping("/api/rooms")
 class RoomController(val roomService: RoomService) {
 

@@ -7,7 +7,7 @@ import com.master.musicroomserver.model.*
 import com.master.musicroomserver.repository.ListenerRepository
 import com.master.musicroomserver.repository.RoomRepository
 import com.master.musicroomserver.repository.SongRepository
-import com.master.musicroomserver.util.GeneratorUtil.generateRoomCode
+import com.master.musicroomserver.util.CodeGenerator.generateRoomCode
 import com.master.musicroomserver.util.mapListenerFromEntity
 import com.master.musicroomserver.util.mapRoomDetailsFromEntity
 import com.master.musicroomserver.util.mapRoomFromEntity
@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import javax.annotation.PreDestroy
-import kotlin.concurrent.schedule
 
 @Service
 class RoomServiceImpl(
@@ -42,7 +41,12 @@ class RoomServiceImpl(
         file.path
     }
 
-    private val mediaPlayerFactory: MediaPlayerFactory = MediaPlayerFactory(listOf("--no-sout-all", "--sout-keep"))
+    private val mediaPlayerFactory = MediaPlayerFactory(
+        listOf(
+            "--no-sout-all",
+            "--sout-keep"
+        )
+    )
 
     override fun getRoomByCode(roomCode: String): Room {
         val roomEntity = getRoomEntityByCode(roomCode)
@@ -66,8 +70,7 @@ class RoomServiceImpl(
             val listenerEntity = ListenerEntity(listenerName, roomEntity)
             listenerRepository.save(listenerEntity)
             webSocketTemplate.convertAndSend(
-                "/topic/room/$roomCode/listener/connect",
-                mapListenerFromEntity(listenerEntity)
+                "/topic/room/$roomCode/listener/connect", mapListenerFromEntity(listenerEntity)
             )
             return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
         } else {
@@ -103,17 +106,13 @@ class RoomServiceImpl(
 
         if (roomPlaylistMap.containsKey(roomCode)) {
             roomPlaylistMap[roomCode]?.addSongToPlaylist(fileName)
-            webSocketTemplate.convertAndSend("/topic/room/$roomCode/song/add", mapSongFromEntity(songEntity))
+            webSocketTemplate.convertAndSend(
+                "/topic/room/$roomCode/song/add", mapSongFromEntity(songEntity)
+            )
         } else {
             val playlistService = PlaylistService(roomCode, path, this, mediaPlayerFactory)
             roomPlaylistMap[roomCode] = playlistService
-            val timer = Timer()
-            println("Waiting 1 second to start streaming...")
-            timer.schedule(1000) {
-                playlistService.play(fileName)
-                timer.cancel()
-                println("Stream starting...")
-            }
+            playlistService.startStream(fileName)
         }
 
         return mapRoomDetailsFromEntity(roomEntity, getElapsedSongDuration(roomCode))
@@ -125,20 +124,17 @@ class RoomServiceImpl(
 
     override fun onNextSong(previousSongFileName: String?, nextSongFileName: String, roomCode: String) {
         if (previousSongFileName != null) {
-            println("Song $previousSongFileName finished!")
             songRepository.findByFileName(previousSongFileName)?.let {
                 songRepository.delete(it)
                 Files.delete(Paths.get(getSongFilePath(previousSongFileName)))
                 webSocketTemplate.convertAndSend(
-                    "/topic/room/$roomCode/song/end",
-                    mapSongFromEntity(it)
+                    "/topic/room/$roomCode/song/end", mapSongFromEntity(it)
                 )
             }
         }
 
         songRepository.findByFileName(nextSongFileName)?.let {
             val song = mapSongFromEntity(it)
-            println("Next song: ${song.name}")
             webSocketTemplate.convertAndSend("/topic/room/$roomCode/song/next", song)
         }
     }
@@ -157,7 +153,8 @@ class RoomServiceImpl(
     }
 
     private fun getRoomEntityByCode(roomCode: String): RoomEntity {
-        return roomRepository.findByCode(roomCode) ?: throw NotFoundException("Room with code '$roomCode' not found!")
+        return roomRepository.findByCode(roomCode)
+            ?: throw NotFoundException("Room with code '$roomCode' not found!")
     }
 
     private fun getElapsedSongDuration(roomCode: String): Long {

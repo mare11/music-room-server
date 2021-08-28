@@ -7,7 +7,7 @@ import uk.co.caprica.vlcj.player.MediaPlayerFactory
 import uk.co.caprica.vlcj.player.list.MediaListPlayer
 import uk.co.caprica.vlcj.player.list.MediaListPlayerEventAdapter
 
-class PlaylistService constructor(
+class PlaylistService(
     private val roomCode: String,
     private val path: String,
     private val listener: PlaylistListener,
@@ -20,35 +20,31 @@ class PlaylistService constructor(
     private val mediaList = mediaPlayerFactory.newMediaList()
     private var itemsPlayed = 0
 
-    fun play(songFileName: String) {
+    fun startStream(songFileName: String) {
         mediaList.setStandardMediaOptions(getStreamOptions(roomCode))
         mediaList.addMedia("$path/$songFileName")
-        println("Streaming files from path:$path")
 
         mediaListPlayer.mediaList = mediaList
         mediaListPlayer.setMediaPlayer(mediaPlayer)
 
         mediaListPlayer.addMediaListPlayerEventListener(object : MediaListPlayerEventAdapter() {
 
-            override fun nextItem(mediaListPlayer: MediaListPlayer?, item: libvlc_media_t?, itemMrl: String?) {
+            override fun nextItem(mediaListPlayer: MediaListPlayer, item: libvlc_media_t, itemMrl: String) {
                 itemsPlayed++
                 val nextItemIndex = mediaList.items().indexOfFirst { it.mrl().equals(itemMrl) }
                 val nextItem = mediaList.items()[nextItemIndex]
                 val nextItemFileName = extractSongFileName(nextItem.name())
-                println("Found next item: name:${nextItem.name()}, mrl:${nextItem.mrl()}")
                 if (nextItemIndex > 0) {
                     val previousItem = mediaList.items()[nextItemIndex - 1]
                     val previousItemFileName = extractSongFileName(previousItem.name())
-                    println("Found previous item, name:${previousItem.name()}, mrl:${previousItem.mrl()} on index:${nextItemIndex - 1}")
                     listener.onNextSong(previousItemFileName, nextItemFileName, roomCode)
                 } else {
                     listener.onNextSong(null, nextItemFileName, roomCode)
                 }
             }
 
-            override fun mediaStateChanged(p0: MediaListPlayer?, p1: Int) {
-                if (libvlc_Ended == libvlc_state_t.state(p1) && itemsPlayed == mediaList.size()) {
-                    println("Playlist finished, cleaning up...")
+            override fun mediaStateChanged(mediaListPlayer: MediaListPlayer, newState: Int) {
+                if (libvlc_Ended == libvlc_state_t.state(newState) && itemsPlayed == mediaList.size()) {
                     cleanUp()
                     listener.onPlaylistEnded(roomCode)
                 }
@@ -64,19 +60,15 @@ class PlaylistService constructor(
 
     fun playNextSong() {
         if (mediaPlayer.isPlaying && itemsPlayed < mediaList.size()) {
-            println("Playing next song for room code: $roomCode")
             mediaListPlayer.playNext()
         }
     }
 
     fun getCurrentPlayerTime(): Long {
         return if (mediaPlayer.isPlaying) {
-            println("*** current player time: ${mediaPlayer.time} ***")
-            println("*** current player length: ${mediaPlayer.length} ***")
-            println("*** current player position: ${mediaPlayer.position} ***")
             mediaPlayer.time
         } else {
-            println("*** current player time is 0 since player is not playing ***")
+            println("Current player time is 0 since player is not playing")
             0L
         }
     }
